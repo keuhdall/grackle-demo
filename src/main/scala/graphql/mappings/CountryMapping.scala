@@ -1,10 +1,20 @@
 package graphql.mappings
 
-import doobie.Meta
+import cats.effect.Sync
+import doobie.{Meta, Transactor}
+import doobie.util.transactor
+import edu.gemini.grackle.Predicate.{Const, Eql}
+import edu.gemini.grackle.Query.{Binding, Filter, Select, Unique}
 import edu.gemini.grackle.QueryCompiler.SelectElaborator
-import edu.gemini.grackle.{QueryCompiler, TypeRef}
-import edu.gemini.grackle.doobie.postgres.DoobieMapping
-import edu.gemini.grackle.syntax.schema
+import edu.gemini.grackle.Value.StringValue
+import edu.gemini.grackle.{Mapping, QueryCompiler, Schema, TypeRef}
+import edu.gemini.grackle.doobie.postgres.{
+  DoobieMapping,
+  DoobieMonitor,
+  LoggedDoobieMappingCompanion
+}
+import edu.gemini.grackle.syntax.*
+import org.typelevel.log4cats.{Logger, LoggerFactory}
 
 case class Country(
     id: Long,
@@ -26,7 +36,8 @@ trait CountryMapping[F[_]] extends DoobieMapping[F] {
   val schema =
     schema"""
       type Query {
-        countries(id: Long): [Country]
+        country(id: Long!): Country
+        countries(continent: String): [Country]
       }
 
       type Country {
@@ -61,6 +72,37 @@ trait CountryMapping[F[_]] extends DoobieMapping[F] {
     )
 
   override val selectElaborator: QueryCompiler.SelectElaborator = new SelectElaborator(
-    Map()
+    Map(
+      QueryType -> {
+        case Select("country", List(Binding("id", StringValue(id))), child) =>
+          Select(
+            "country",
+            Nil,
+            Unique(Filter(Eql(CountryType / "id", Const(id)), child))
+          ).success
+        case Select(
+              "countries",
+              List(Binding("continent", StringValue(continent))),
+              child
+            ) =>
+          Select(
+            "countries",
+            Nil,
+            Filter(Eql(CountryType / "continent", Const(continent)), child)
+          ).success
+      }
+    )
   )
+}
+
+object CountryMapping extends LoggedDoobieMappingCompanion {
+  override def mkMapping[F[_]: Sync](
+      xa: Transactor[F],
+      monitor: DoobieMonitor[F]
+  ): Mapping[F] = new DoobieMapping[F](xa, monitor) with CountryMapping[F]
+
+  def mkMappingFromXa[F[_]: Sync: LoggerFactory](xa: Transactor[F]): Mapping[F] = {
+    given Logger[F] = LoggerFactory[F].getLogger
+    mkMapping(xa)
+  }
 }
