@@ -1,0 +1,9 @@
+**/.idea/
+**/.bsp/
+target/
+**/project/
+**/target/
+dependencies/redis/*.rdb
+out/
+*.iml
+.env
