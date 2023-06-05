@@ -6,6 +6,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "grackle-demo",
+    dockerExposedPorts ++= Seq(8080),
     commonSettings,
     libraryDependencies ++=
       commonDeps ++
@@ -14,6 +15,9 @@ lazy val root = project
         http4sDeps ++
         grackleDeps
   )
+  .enablePlugins(JavaServerAppPackaging)
+  .enablePlugins(DockerPlugin)
+  .enablePlugins(ScalafmtPlugin)
 
 lazy val commonSettings = Seq(
   scalacOptions ++= Seq(
