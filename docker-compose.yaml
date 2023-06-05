@@ -1,0 +1,40 @@
+version: '3.7'
+services:
+
+  grackle-demo:
+    image: grackle-demo:0.1.0-SNAPSHOT
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    networks:
+      - static-network
+
+  flyway:
+    image: flyway/flyway
+    depends_on:
+      - postgres
+    command: -url=jdbc:postgresql://postgres/${POSTGRES_DB} -user=${POSTGRES_USER} -password=${POSTGRES_PWD} -connectRetries=10 migrate
+    volumes:
+      - ./dependencies/postgres:/flyway/sql
+    ports:
+      - "3306:3306"
+    networks:
+      - static-network
+
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PWD}
+    ports:
+      - "5432:5432"
+    networks:
+      - static-network
+
+networks:
+  static-network:
