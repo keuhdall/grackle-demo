@@ -16,9 +16,9 @@ object Server extends IOApp {
       ec <- ExecutionContexts.fixedThreadPool[F](32)
       xa <- HikariTransactor.newHikariTransactor[F](
         driverClassName = "org.postgresql.Driver",
-        url = "jdbc:postgresql://postgres/demo",
+        url = "jdbc:postgresql://postgres/default",
         user = "root",
-        pass = "password",
+        pass = "admin",
         connectEC = ec
       )
       countryMapping = CountryMapping.mkMappingFromXa(xa)

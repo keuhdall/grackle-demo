@@ -25,7 +25,7 @@ case class Country(
 )
 
 trait CountryMapping[F[_]] extends DoobieMapping[F] {
-  object country extends TableDef("country") {
+  object country extends TableDef("countries") {
     val id = col("id", Meta[Long])
     val name = col("name", Meta[String])
     val continent = col("continent", Meta[String])
