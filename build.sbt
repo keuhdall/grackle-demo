@@ -13,7 +13,8 @@ lazy val root = project
         circeDeps ++
         doobieDeps ++
         http4sDeps ++
-        grackleDeps
+        grackleDeps ++
+        logsDeps
   )
   .enablePlugins(JavaServerAppPackaging)
   .enablePlugins(DockerPlugin)
@@ -42,6 +43,7 @@ lazy val grackleDeps = Seq(
 )
 lazy val http4sDeps =
   Seq(deps.http4sClient, deps.http4sServer, deps.http4sCirce, deps.http4sDsl)
+lazy val logsDeps = Seq(deps.log4cats, deps.slf4j)
 
 lazy val deps = new {
   val catsVersion = "2.9.0"
@@ -52,6 +54,8 @@ lazy val deps = new {
   val grackleVersion = "0.12.0"
   val http4sVersion = "1.0.0-M39"
   val kittensVersion = "3.0.0"
+  val log4catsVersion = "2.5.0"
+  val slf4jVersion = "2.0.5"
 
   val cats = "org.typelevel" %% "cats-core" % catsVersion
   val catsCollections = "org.typelevel" %% "cats-collections-core" % catsCollectionVersion
@@ -75,4 +79,8 @@ lazy val deps = new {
   val http4sServer = "org.http4s" %% "http4s-ember-server" % http4sVersion
   val http4sCirce = "org.http4s" %% "http4s-circe" % http4sVersion
   val http4sDsl = "org.http4s" %% "http4s-dsl" % http4sVersion
+
+  val log4cats = "org.typelevel" %% "log4cats-slf4j" % log4catsVersion
+
+  val slf4j = "org.slf4j" % "slf4j-simple" % slf4jVersion
 }
