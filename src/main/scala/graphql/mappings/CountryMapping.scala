@@ -65,8 +65,8 @@ trait CountryMapping[F[_]] extends DoobieMapping[F] {
           SqlField("id", country.id, key = true),
           SqlField("name", country.name),
           SqlField("continent", country.continent),
-          SqlField("best_food", country.bestFood),
-          SqlField("has_eiffel_tower", country.hasEiffelTower)
+          SqlField("bestFood", country.bestFood),
+          SqlField("hasEiffelTower", country.hasEiffelTower)
         )
       )
     )
