@@ -26,11 +26,11 @@ case class Country(
 
 trait CountryMapping[F[_]] extends DoobieMapping[F] {
   object country extends TableDef("countries") {
-    val id = col("id", Meta[Long])
-    val name = col("name", Meta[String])
-    val continent = col("continent", Meta[String])
-    val bestFood = col("best_food", Meta[String], nullable = true)
-    val hasEiffelTower = col("has_eiffel_tower", Meta[Boolean])
+    val id: ColumnRef = col("id", Meta[Long])
+    val name: ColumnRef = col("name", Meta[String])
+    val continent: ColumnRef = col("continent", Meta[String])
+    val bestFood: ColumnRef = col("best_food", Meta[String], nullable = true)
+    val hasEiffelTower: ColumnRef = col("has_eiffel_tower", Meta[Boolean])
   }
 
   val schema =
@@ -41,6 +41,7 @@ trait CountryMapping[F[_]] extends DoobieMapping[F] {
       }
 
       type Country {
+        id: Long!
         name: String!
         continent: String!
         bestFood: String

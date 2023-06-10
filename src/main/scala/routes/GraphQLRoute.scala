@@ -17,6 +17,7 @@ object GraphQLRoute {
     HttpRoutes.of[F] { case req @ POST -> Root / "graphql" =>
       for {
         body <- req.as[Json]
+        _ <- logger.info(s"received query ${body.noSpaces}")
         obj <- body.asObject.liftTo[F](InvalidMessageBodyFailure("Invalid GraphQL query"))
         query <- obj("query")
           .flatMap(_.asString)
