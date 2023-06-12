@@ -36,12 +36,12 @@ trait CountryMapping[F[_]] extends DoobieMapping[F] {
   val schema =
     schema"""
       type Query {
-        country(id: Long!): Country
+        country(id: Int!): Country
         countries(continent: String): [Country]
       }
 
       type Country {
-        id: Long!
+        id: Int!
         name: String!
         continent: String!
         bestFood: String
