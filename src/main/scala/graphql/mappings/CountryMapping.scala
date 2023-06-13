@@ -1,19 +1,19 @@
 package graphql.mappings
 
 import cats.effect.Sync
-import doobie.{Meta, Transactor}
 import doobie.util.transactor
+import doobie.{Meta, Transactor}
 import edu.gemini.grackle.Predicate.{Const, Eql}
-import edu.gemini.grackle.Query.{Binding, Filter, Select, Unique}
-import edu.gemini.grackle.QueryCompiler.SelectElaborator
-import edu.gemini.grackle.Value.StringValue
-import edu.gemini.grackle.{Mapping, QueryCompiler, Schema, TypeRef}
+import edu.gemini.grackle.Query.*
+import edu.gemini.grackle.QueryCompiler.*
+import edu.gemini.grackle.Value.*
 import edu.gemini.grackle.doobie.postgres.{
   DoobieMapping,
   DoobieMonitor,
   LoggedDoobieMappingCompanion
 }
 import edu.gemini.grackle.syntax.*
+import edu.gemini.grackle.*
 import org.typelevel.log4cats.{Logger, LoggerFactory}
 
 case class Country(
@@ -33,7 +33,7 @@ trait CountryMapping[F[_]] extends DoobieMapping[F] {
     val hasEiffelTower: ColumnRef = col("has_eiffel_tower", Meta[Boolean])
   }
 
-  val schema =
+  override val schema =
     schema"""
       type Query {
         country(id: Int!): Country
@@ -46,6 +46,7 @@ trait CountryMapping[F[_]] extends DoobieMapping[F] {
         continent: String!
         bestFood: String
         hasEiffelTower: Boolean!
+        cities: [City!]!
       }
     """
 
@@ -68,6 +69,7 @@ trait CountryMapping[F[_]] extends DoobieMapping[F] {
           SqlField("continent", country.continent),
           SqlField("bestFood", country.bestFood),
           SqlField("hasEiffelTower", country.hasEiffelTower)
+          // SqlObject("cities", Join(country.id, city.countryId))
         )
       )
     )
