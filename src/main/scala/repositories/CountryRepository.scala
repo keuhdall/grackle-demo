@@ -5,7 +5,7 @@ import cats.implicits.*
 import doobie.implicits.*
 import doobie.util.fragment.Fragment
 import doobie.util.transactor.Transactor
-import graphql.mappings.Country
+import types.Country
 
 trait CountryRepository[F[_]] {
   def createCountry(

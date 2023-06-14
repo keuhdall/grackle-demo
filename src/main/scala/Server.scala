@@ -2,8 +2,7 @@ import cats.effect.*
 import com.comcast.ip4s.{ipv4, port}
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import graphql.GraphQLService
-import graphql.mappings.CountryMapping
+import graphql.{GraphQLService, Mappings}
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.typelevel.log4cats.LoggerFactory
@@ -21,8 +20,8 @@ object Server extends IOApp {
         pass = "admin",
         connectEC = ec
       )
-      countryMapping = CountryMapping.mkMappingFromXa(xa)
-      gqlService = GraphQLService.fromMapping(countryMapping)
+      mappings = Mappings.mkMappingFromXa(xa)
+      gqlService = GraphQLService.fromMapping(mappings)
       routes = GraphQLRoute[F](gqlService)
       server <- EmberServerBuilder
         .default[F]
