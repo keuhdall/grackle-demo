@@ -6,7 +6,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "grackle-demo",
-    dockerExposedPorts ++= Seq(8080),
+    dockerExposedPorts ++= Seq(8080, 5000),
     commonSettings,
     libraryDependencies ++=
       commonDeps ++
@@ -28,7 +28,8 @@ lazy val commonSettings = Seq(
     "-source:future",
     "-feature",
     "-deprecation"
-  )
+  ),
+  Universal / javaOptions += "-jvm-debug 5000"
 ) ++ scalafmtSettings
 
 lazy val scalafmtSettings = Seq(scalafmtOnCompile := true)
