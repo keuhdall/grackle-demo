@@ -97,13 +97,7 @@ trait Mappings[F[_]](xa: Transactor[F]) extends DoobieMapping[F] {
                     child
                   ) =>
                 CityQueries.createCity(name, cId, isCapital).transact(xa).map { cityId =>
-                  Result(
-                    Select(
-                      "city",
-                      Nil,
-                      Unique(Filter(Eql(CityType / "id", Const(cityId)), child))
-                    )
-                  )
+                  Unique(Filter(Eql(CityType / "id", Const(cityId.toInt)), child)).success
                 }
               case _ =>
                 Result
