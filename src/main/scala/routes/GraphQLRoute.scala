@@ -15,7 +15,7 @@ object GraphQLRoute {
     val logger = LoggerFactory[F].getLogger
 
     HttpRoutes.of[F] { case req @ POST -> Root / "graphql" =>
-      for {
+      (for {
         body <- req.as[Json]
         _ <- logger.info(s"received query ${body.noSpaces}")
         obj <- body.asObject.liftTo[F](InvalidMessageBodyFailure("Invalid GraphQL query"))
@@ -26,7 +26,9 @@ object GraphQLRoute {
         vars = obj("variables")
         result <- gqlService.runQuery(op, vars, query)
         response <- Ok(result)
-      } yield response
+      } yield response).handleErrorWith { e =>
+        InternalServerError(e.getMessage)
+      }
     }
   }
 }

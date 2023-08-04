@@ -1,7 +1,10 @@
 package graphql
 
 import cats.effect.Sync
+import cats.implicits.*
+import doobie.implicits.*
 import doobie.{Meta, Transactor}
+import edu.gemini.grackle.*
 import edu.gemini.grackle.Predicate.*
 import edu.gemini.grackle.Query.*
 import edu.gemini.grackle.QueryCompiler.*
@@ -12,12 +15,12 @@ import edu.gemini.grackle.doobie.postgres.{
   LoggedDoobieMappingCompanion
 }
 import edu.gemini.grackle.syntax.*
-import edu.gemini.grackle.*
 import org.typelevel.log4cats.{Logger, LoggerFactory}
+import queries.CityQueries
 
-trait Mappings[F[_]] extends DoobieMapping[F] {
+trait Mappings[F[_]](xa: Transactor[F]) extends DoobieMapping[F] {
   object country extends TableDef("countries") {
-    val id: ColumnRef = col("id", Meta[Long])
+    val id: ColumnRef = col("id", Meta[Int])
     val name: ColumnRef = col("name", Meta[String])
     val continent: ColumnRef = col("continent", Meta[String])
     val bestFood: ColumnRef = col("best_food", Meta[String], nullable = true)
@@ -25,9 +28,9 @@ trait Mappings[F[_]] extends DoobieMapping[F] {
   }
 
   object city extends TableDef("cities") {
-    val id: ColumnRef = col("id", Meta[Long])
+    val id: ColumnRef = col("id", Meta[Int])
     val name: ColumnRef = col("name", Meta[String])
-    val countryId: ColumnRef = col("country_id", Meta[Long])
+    val countryId: ColumnRef = col("country_id", Meta[Int])
     val isCapital: ColumnRef = col("is_capital", Meta[Boolean])
   }
 
@@ -40,6 +43,14 @@ trait Mappings[F[_]] extends DoobieMapping[F] {
         city(cityId: Int): City
       }
 
+      type Mutation {
+        createCity(
+          name: String!
+          countryId: Int!
+          isCapital: Boolean!
+        ): City
+      }
+
       type Country {
         id: Int!
         name: String!
@@ -50,7 +61,7 @@ trait Mappings[F[_]] extends DoobieMapping[F] {
       }
 
       type City {
-        id: ID!
+        id: Int!
         name: String!
         country: Country!
         isCapital: Boolean!
@@ -58,6 +69,7 @@ trait Mappings[F[_]] extends DoobieMapping[F] {
     """
 
   val QueryType: TypeRef = schema.ref("Query")
+  val MutationType: TypeRef = schema.ref("Mutation")
   val CountryType: TypeRef = schema.ref("Country")
   val CityType: TypeRef = schema.ref("City")
 
@@ -68,6 +80,35 @@ trait Mappings[F[_]] extends DoobieMapping[F] {
         fieldMappings = List(
           SqlObject("cities"),
           SqlObject("countries")
+        )
+      ),
+      ObjectMapping(
+        tpe = MutationType,
+        fieldMappings = List(
+          RootEffect.computeQuery("createCity")((query, path, _) =>
+            query match {
+              case s @ Select(
+                    "createCity",
+                    List(
+                      Binding("name", StringValue(name)),
+                      Binding("countryId", IntValue(cId)),
+                      Binding("isCapital", BooleanValue(isCapital))
+                    ),
+                    child
+                  ) =>
+                CityQueries.createCity(name, cId, isCapital).transact(xa).map { cityId =>
+                  s.copy(child =
+                    Unique(
+                      Filter(Eql(CityType / "id", Const(cityId)), child)
+                    )
+                  ).success
+                }
+              case _ =>
+                Result
+                  .internalError(s"Implementation error: expected Environment node.")
+                  .pure[F]
+            }
+          )
         )
       ),
       ObjectMapping(
@@ -146,7 +187,7 @@ object Mappings extends LoggedDoobieMappingCompanion {
   override def mkMapping[F[_]: Sync](
       xa: Transactor[F],
       monitor: DoobieMonitor[F]
-  ): Mapping[F] = new DoobieMapping[F](xa, monitor) with Mappings[F]
+  ): Mapping[F] = new DoobieMapping[F](xa, monitor) with Mappings[F](xa)
 
   def mkMappingFromXa[F[_]: Sync: LoggerFactory](xa: Transactor[F]): Mapping[F] = {
     given Logger[F] = LoggerFactory[F].getLogger
