@@ -20,7 +20,7 @@ import queries.CityQueries
 
 trait Mappings[F[_]](xa: Transactor[F]) extends DoobieMapping[F] {
   object country extends TableDef("countries") {
-    val id: ColumnRef = col("id", Meta[Long])
+    val id: ColumnRef = col("id", Meta[Int])
     val name: ColumnRef = col("name", Meta[String])
     val continent: ColumnRef = col("continent", Meta[String])
     val bestFood: ColumnRef = col("best_food", Meta[String], nullable = true)
@@ -28,9 +28,9 @@ trait Mappings[F[_]](xa: Transactor[F]) extends DoobieMapping[F] {
   }
 
   object city extends TableDef("cities") {
-    val id: ColumnRef = col("id", Meta[Long])
+    val id: ColumnRef = col("id", Meta[Int])
     val name: ColumnRef = col("name", Meta[String])
-    val countryId: ColumnRef = col("country_id", Meta[Long])
+    val countryId: ColumnRef = col("country_id", Meta[Int])
     val isCapital: ColumnRef = col("is_capital", Meta[Boolean])
   }
 
@@ -61,7 +61,7 @@ trait Mappings[F[_]](xa: Transactor[F]) extends DoobieMapping[F] {
       }
 
       type City {
-        id: ID!
+        id: Int!
         name: String!
         country: Country!
         isCapital: Boolean!
@@ -97,7 +97,11 @@ trait Mappings[F[_]](xa: Transactor[F]) extends DoobieMapping[F] {
                     child
                   ) =>
                 CityQueries.createCity(name, cId, isCapital).transact(xa).map { cityId =>
-                  Unique(Filter(Eql(CityType / "id", Const(cityId.toInt)), child)).success
+                  s.copy(child =
+                    Unique(
+                      Filter(Eql(CityType / "id", Const(cityId)), child)
+                    )
+                  ).success
                 }
               case _ =>
                 Result
